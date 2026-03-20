@@ -288,7 +288,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-LOGO_PATH = "logo_entreprise.png"  # Assure-toi que ce fichier est bien dans le repo (même dossier que ce script)
+LOGO_PATH = "BEAM_LOGO_DEF_NOIR.png"  # Assure-toi que ce fichier est bien dans le repo (même dossier que ce script)
 
 st.markdown(
     """
