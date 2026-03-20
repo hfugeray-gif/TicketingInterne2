@@ -288,7 +288,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-LOGO_PATH = "BEAM_LOGO_DEF_NOIR.png"
+LOGO_PATH = "logo_entreprise.png"  # Assure-toi que ce fichier est bien dans le repo (même dossier que ce script)
 
 st.markdown(
     """
@@ -402,8 +402,17 @@ with onglet1:
     typage = st.radio("Typage *", TYPES, horizontal=True)
     commentaire = st.text_area("Commentaire")
     photo_mode = st.radio("Mode photo", ["Prendre une photo", "Téléverser une image"], horizontal=True)
+    if "show_camera" not in st.session_state:
+        st.session_state.show_camera = False
+
     if photo_mode == "Prendre une photo":
-        photo = st.camera_input("Photo en direct")
+        if not st.session_state.show_camera:
+            if st.button("📸 Ouvrir la caméra"):
+                st.session_state.show_camera = True
+        if st.session_state.show_camera:
+            photo = st.camera_input("Prendre une photo")
+        else:
+            photo = None
     else:
         photo = st.file_uploader("Photo", type=["png", "jpg", "jpeg"])
 
