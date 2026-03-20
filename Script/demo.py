@@ -1,6 +1,5 @@
 import os
 import sqlite3
-import csv
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 from pathlib import Path
@@ -23,6 +22,183 @@ ROLES = [
     "Admin",
     "Supervision",
 ]
+
+st.set_page_config(
+    page_title="Ticketing interne — Démo MVP",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+LOGO_PATH = "Script/BEAM_LOGO_DEF_NOIR.png"
+
+st.markdown(
+    """
+    <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+
+        header {
+            background: transparent !important;
+        }
+
+        [data-testid="stHeader"] {
+            background: transparent !important;
+            height: 3rem;
+        }
+
+        .stApp {
+            background: linear-gradient(180deg, #f7f9fc 0%, #eef3f9 100%);
+        }
+
+        .block-container {
+            padding-top: 2.5rem;
+            padding-bottom: 1.2rem;
+            max-width: 1200px;
+        }
+
+        section[data-testid="stSidebar"] {
+            background: rgba(255, 255, 255, 0.35) !important;
+            border-right: 1px solid #d9e2f2;
+        }
+
+        div[data-testid="stMetric"] {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid #d9e2f2;
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+        }
+
+        div.stButton > button {
+            border-radius: 12px;
+            border: none;
+            background: #0f4c81;
+            color: white;
+            font-weight: 600;
+            padding: 0.6rem 1rem;
+        }
+
+        div.stButton > button:hover {
+            background: #0c3d68;
+            color: white;
+        }
+
+        div.stButton > button:focus:not(:active) {
+            color: white !important;
+            border: none !important;
+            box-shadow: 0 0 0 0.2rem rgba(15, 76, 129, 0.2) !important;
+        }
+
+        div[data-testid="stFileUploader"] section,
+        div[data-testid="stTextInputRootElement"],
+        div[data-testid="stTextAreaRootElement"],
+        div[data-testid="stNumberInputRootElement"],
+        div[data-testid="stDateInputRootElement"] {
+            border-radius: 12px;
+            background: transparent !important;
+        }
+
+        div[data-testid="stTextInputRootElement"] input,
+        div[data-testid="stTextAreaRootElement"] textarea,
+        div[data-testid="stNumberInputRootElement"] input {
+            background: rgba(255, 255, 255, 0.92) !important;
+            border: 1px solid #d9e2f2 !important;
+            border-radius: 12px !important;
+        }
+
+        div[data-testid="stTextInputRootElement"] input:focus,
+        div[data-testid="stTextAreaRootElement"] textarea:focus,
+        div[data-testid="stNumberInputRootElement"] input:focus {
+            border: 1px solid #0f4c81 !important;
+            box-shadow: 0 0 0 0.15rem rgba(15, 76, 129, 0.12) !important;
+        }
+
+        div[data-testid="stTextAreaRootElement"] textarea {
+            min-height: 120px;
+        }
+
+        div[data-baseweb="select"] {
+            background: transparent !important;
+            border: none !important;
+        }
+
+        div[data-baseweb="select"] > div {
+            background: rgba(255, 255, 255, 0.72) !important;
+            border: 1px solid #d9e2f2 !important;
+            border-radius: 12px !important;
+            box-shadow: none !important;
+        }
+
+        div[data-baseweb="select"] > div:hover {
+            background: rgba(255, 255, 255, 0.86) !important;
+        }
+
+        label, .stSelectbox label, .stTextInput label, .stTextArea label, .stRadio label {
+            background: transparent !important;
+            color: #486581 !important;
+            font-weight: 500;
+        }
+
+        .top-banner {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 10px 0 10px 0;
+            margin-bottom: 18px;
+            box-shadow: none;
+        }
+
+        .top-banner h1 {
+            margin: 0;
+            color: #12344d;
+            font-size: 2rem;
+        }
+
+        .top-banner p {
+            margin: 6px 0 0 0;
+            color: #486581;
+        }
+
+        div[data-testid="stDataFrame"] {
+            background: rgba(255, 255, 255, 0.55);
+            border-radius: 14px;
+            border: 1px solid #d9e2f2;
+            overflow: hidden;
+        }
+
+        div[data-testid="stTabs"] button {
+            border-radius: 10px 10px 0 0;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+if os.path.exists(LOGO_PATH):
+    c_logo, c_title = st.columns([1, 5])
+    with c_logo:
+        st.image(LOGO_PATH, width=110)
+    with c_title:
+        st.markdown(
+            """
+            <div class="top-banner">
+                <h1>Ticketing interne — Démo MVP</h1>
+                <p>Prototype Python / Streamlit personnalisé aux couleurs de l'entreprise</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+else:
+    st.markdown(
+        """
+        <div class="top-banner">
+            <h1>Ticketing interne — Démo MVP</h1>
+            <p>Prototype Python / Streamlit personnalisé aux couleurs de l'entreprise</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def get_conn():
@@ -282,103 +458,8 @@ def seed_demo_data():
     add_comment(t2, "tech_app_1", "Incident reproduit, analyse des logs applicatifs")
 
 
-st.set_page_config(
-    page_title="Ticketing interne — Démo MVP",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
-LOGO_PATH = "BEAM_LOGO_DEF_NOIR.png"  # Assure-toi que ce fichier est bien dans le repo (même dossier que ce script)
-
-st.markdown(
-    """
-    <style>
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        header {visibility: hidden;}
-        .stApp {
-            background: linear-gradient(180deg, #f7f9fc 0%, #eef3f9 100%);
-        }
-        .block-container {
-            padding-top: 1.2rem;
-            padding-bottom: 1.2rem;
-            max-width: 1200px;
-        }
-        div[data-testid="stMetric"] {
-            background: white;
-            border: 1px solid #d9e2f2;
-            border-radius: 16px;
-            padding: 12px;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
-        }
-        div.stButton > button {
-            border-radius: 12px;
-            border: none;
-            background: #0f4c81;
-            color: white;
-            font-weight: 600;
-            padding: 0.6rem 1rem;
-        }
-        div.stButton > button:hover {
-            background: #0c3d68;
-            color: white;
-        }
-        div[data-testid="stFileUploader"] section,
-        div[data-testid="stTextInputRootElement"],
-        div[data-testid="stTextAreaRootElement"],
-        div[data-testid="stSelectbox"] {
-            border-radius: 12px;
-        }
-        .top-banner {
-            background: white;
-            border: 1px solid #d9e2f2;
-            border-radius: 20px;
-            padding: 18px 22px;
-            margin-bottom: 18px;
-            box-shadow: 0 6px 20px rgba(15,76,129,0.08);
-        }
-        .top-banner h1 {
-            margin: 0;
-            color: #12344d;
-            font-size: 2rem;
-        }
-        .top-banner p {
-            margin: 6px 0 0 0;
-            color: #486581;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-if os.path.exists(LOGO_PATH):
-    c_logo, c_title = st.columns([1, 5])
-    with c_logo:
-        st.image(LOGO_PATH, width=120)
-    with c_title:
-        st.markdown(
-            """
-            <div class="top-banner">
-                <h1>Ticketing interne — Démo MVP</h1>
-                <p>Prototype Python / Streamlit personnalisé aux couleurs de l'entreprise</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-else:
-    st.markdown(
-        """
-        <div class="top-banner">
-            <h1>Ticketing interne — Démo MVP</h1>
-            <p>Prototype Python / Streamlit personnalisé aux couleurs de l'entreprise</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 init_db()
 seed_demo_data()
-
-# En-tête personnalisé déjà affiché plus haut
 
 with st.sidebar:
     st.header("Contexte démo")
@@ -401,7 +482,9 @@ with onglet1:
     titre = st.text_input("Titre *")
     typage = st.radio("Typage *", TYPES, horizontal=True)
     commentaire = st.text_area("Commentaire")
+
     photo_mode = st.radio("Mode photo", ["Prendre une photo", "Téléverser une image"], horizontal=True)
+
     if "show_camera" not in st.session_state:
         st.session_state.show_camera = False
 
@@ -414,6 +497,7 @@ with onglet1:
         else:
             photo = None
     else:
+        st.session_state.show_camera = False
         photo = st.file_uploader("Photo", type=["png", "jpg", "jpeg"])
 
     if titre:
@@ -429,10 +513,14 @@ with onglet1:
             ticket_id = create_ticket(titre.strip(), typage, commentaire.strip(), current_user, photo)
             st.success(f"Ticket #{ticket_id} créé avec succès.")
             st.info("Notification simulée : demandeur notifié à la création.")
+            st.session_state.show_camera = False
 
 with onglet2:
     st.subheader("Vue opérationnelle")
     df = get_tickets()
+
+    if "selected_ticket_id" not in st.session_state:
+        st.session_state.selected_ticket_id = None
 
     if df.empty:
         st.info("Aucun ticket pour le moment.")
@@ -461,95 +549,148 @@ with onglet2:
             )
             filtered = filtered[mask]
 
-        st.dataframe(
-            filtered[[
-                "id", "titre", "typage", "statut", "priorite", "demandeur", "assigne_a", "created_at"
-            ]],
-            use_container_width=True,
-            hide_index=True,
-        )
+        st.markdown("### Tickets")
+        left_panel, right_panel = st.columns([1.1, 1.7], gap="large")
 
-        ticket_ids = filtered["id"].tolist()
-        if ticket_ids:
-            selected_ticket_id = st.selectbox("Sélectionner un ticket", ticket_ids)
-            ticket = get_ticket(selected_ticket_id)
+        with left_panel:
+            st.caption(f"{len(filtered)} ticket(s) trouvé(s)")
 
-            if ticket:
-                st.markdown("### Détail du ticket")
-                left, right = st.columns([2, 1])
-                with left:
-                    st.write(f"**Titre** : {ticket['titre']}")
-                    st.write(f"**Type** : {ticket['typage']}")
-                    st.write(f"**Statut** : {ticket['statut']}")
-                    st.write(f"**Priorité** : {ticket['priorite'] or '-'}")
-                    st.write(f"**Demandeur** : {ticket['demandeur']}")
-                    st.write(f"**Commentaire initial** : {ticket['commentaire'] or '-'}")
-                    st.write(f"**Créé le** : {ticket['created_at']}")
-                    if ticket["motif_resolution"]:
-                        st.write(f"**Motif de résolution** : {ticket['motif_resolution']}")
-                    if ticket["ticket_maitre_id"]:
-                        st.write(f"**Ticket maître** : #{ticket['ticket_maitre_id']}")
-                with right:
-                    if ticket["photo_path"] and os.path.exists(ticket["photo_path"]):
-                        st.image(ticket["photo_path"], caption="Photo jointe")
+            if filtered.empty:
+                st.info("Aucun ticket ne correspond aux filtres.")
+            else:
+                for _, row in filtered.iterrows():
+                    is_selected = st.session_state.selected_ticket_id == int(row["id"])
+                    statut_color = {
+                        "Ouvert": "#d97706",
+                        "En cours": "#0f4c81",
+                        "Clôturé": "#2d6a4f",
+                        "Doublon": "#7c3aed",
+                    }.get(row["statut"], "#486581")
 
-                st.markdown("### Actions")
-                a1, a2 = st.columns(2)
-                with a1:
-                    new_statut = st.selectbox("Nouveau statut", STATUTS, index=STATUTS.index(ticket["statut"]))
-                    new_priorite = st.selectbox(
-                        "Priorité",
-                        [""] + PRIORITES,
-                        index=([""] + PRIORITES).index(ticket["priorite"] if ticket["priorite"] in PRIORITES else ""),
+                    st.markdown(
+                        f"""
+                        <div style="
+                            background: rgba(255,255,255,0.78);
+                            border: 1px solid {'#0f4c81' if is_selected else '#d9e2f2'};
+                            border-left: 5px solid {statut_color};
+                            border-radius: 14px;
+                            padding: 12px 14px;
+                            margin-bottom: 10px;
+                            box-shadow: {'0 8px 20px rgba(15,76,129,0.12)' if is_selected else 'none'};
+                        ">
+                            <div style="font-weight: 700; color: #12344d; font-size: 1rem; margin-bottom: 4px;">
+                                #{int(row['id'])} — {row['titre']}
+                            </div>
+                            <div style="color: #486581; font-size: 0.92rem; margin-bottom: 6px;">
+                                {row['typage']} · {row['statut']} · {row['priorite'] if pd.notna(row['priorite']) and row['priorite'] else 'Sans priorité'}
+                            </div>
+                            <div style="color: #6b7c93; font-size: 0.85rem;">
+                                Demandeur : {row['demandeur']} · Assigné : {row['assigne_a'] if pd.notna(row['assigne_a']) and row['assigne_a'] else '-'}
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
                     )
-                    assigne_a = st.text_input("Assigner à", value=ticket["assigne_a"] or "")
-                with a2:
-                    dispatcheur = st.text_input("Dispatcheur", value=ticket["dispatcheur"] or "")
-                    ticket_maitre_id = st.text_input("Ticket maître (si doublon)", value=ticket["ticket_maitre_id"] or "")
-                    motif_resolution = st.text_input("Motif de résolution", value=ticket["motif_resolution"] or "")
 
-                if st.button("Enregistrer les changements"):
-                    payload = {
-                        "statut": new_statut,
-                        "priorite": new_priorite or None,
-                        "assigne_a": assigne_a or None,
-                        "dispatcheur": dispatcheur or None,
-                        "ticket_maitre_id": int(ticket_maitre_id) if str(ticket_maitre_id).strip().isdigit() else None,
-                        "motif_resolution": motif_resolution or None,
-                    }
-                    if new_statut == "Clôturé":
-                        if not motif_resolution.strip():
-                            st.error("Le motif de résolution est obligatoire pour clôturer.")
+                    if st.button(
+                        "Voir le ticket" if not is_selected else "Ticket affiché",
+                        key=f"open_ticket_{int(row['id'])}",
+                        use_container_width=True,
+                        disabled=is_selected,
+                    ):
+                        st.session_state.selected_ticket_id = int(row["id"])
+                        st.rerun()
+
+                if st.session_state.selected_ticket_id is None and not filtered.empty:
+                    st.session_state.selected_ticket_id = int(filtered.iloc[0]["id"])
+                    st.rerun()
+
+        with right_panel:
+            selected_ticket_id = st.session_state.selected_ticket_id
+            if selected_ticket_id is None or selected_ticket_id not in filtered["id"].tolist():
+                st.info("Sélectionne un ticket à gauche pour afficher son détail.")
+            else:
+                ticket = get_ticket(selected_ticket_id)
+
+                if ticket:
+                    st.markdown("### Détail du ticket")
+                    left, right = st.columns([2, 1])
+                    with left:
+                        st.write(f"**Titre** : {ticket['titre']}")
+                        st.write(f"**Type** : {ticket['typage']}")
+                        st.write(f"**Statut** : {ticket['statut']}")
+                        st.write(f"**Priorité** : {ticket['priorite'] or '-'}")
+                        st.write(f"**Demandeur** : {ticket['demandeur']}")
+                        st.write(f"**Commentaire initial** : {ticket['commentaire'] or '-'}")
+                        st.write(f"**Créé le** : {ticket['created_at']}")
+                        if ticket["motif_resolution"]:
+                            st.write(f"**Motif de résolution** : {ticket['motif_resolution']}")
+                        if ticket["ticket_maitre_id"]:
+                            st.write(f"**Ticket maître** : #{ticket['ticket_maitre_id']}")
+                    with right:
+                        if ticket["photo_path"] and os.path.exists(ticket["photo_path"]):
+                            st.image(ticket["photo_path"], caption="Photo jointe")
+
+                    st.markdown("### Actions")
+                    a1, a2 = st.columns(2)
+                    with a1:
+                        new_statut = st.selectbox("Nouveau statut", STATUTS, index=STATUTS.index(ticket["statut"]))
+                        new_priorite = st.selectbox(
+                            "Priorité",
+                            [""] + PRIORITES,
+                            index=([""] + PRIORITES).index(ticket["priorite"] if ticket["priorite"] in PRIORITES else ""),
+                        )
+                        assigne_a = st.text_input("Assigner à", value=ticket["assigne_a"] or "")
+                    with a2:
+                        dispatcheur = st.text_input("Dispatcheur", value=ticket["dispatcheur"] or "")
+                        ticket_maitre_id = st.text_input("Ticket maître (si doublon)", value=ticket["ticket_maitre_id"] or "")
+                        motif_resolution = st.text_input("Motif de résolution", value=ticket["motif_resolution"] or "")
+
+                    if st.button("Enregistrer les changements"):
+                        payload = {
+                            "statut": new_statut,
+                            "priorite": new_priorite or None,
+                            "assigne_a": assigne_a or None,
+                            "dispatcheur": dispatcheur or None,
+                            "ticket_maitre_id": int(ticket_maitre_id) if str(ticket_maitre_id).strip().isdigit() else None,
+                            "motif_resolution": motif_resolution or None,
+                        }
+                        if new_statut == "Clôturé":
+                            if not motif_resolution.strip():
+                                st.error("Le motif de résolution est obligatoire pour clôturer.")
+                            else:
+                                payload["closed_at"] = now_iso()
+                                update_ticket(selected_ticket_id, current_user, **payload)
+                                st.success("Ticket clôturé et mis à jour.")
+                                st.info("Notification simulée : demandeur notifié à la clôture.")
+                                st.rerun()
                         else:
-                            payload["closed_at"] = now_iso()
                             update_ticket(selected_ticket_id, current_user, **payload)
-                            st.success("Ticket clôturé et mis à jour.")
-                            st.info("Notification simulée : demandeur notifié à la clôture.")
+                            st.success("Ticket mis à jour.")
+                            if assigne_a:
+                                st.info("Notification simulée : preneur notifié à l'attribution.")
+                            st.rerun()
+
+                    st.markdown("### Commentaires")
+                    comments_df = get_comments(selected_ticket_id)
+                    if comments_df.empty:
+                        st.caption("Aucun commentaire.")
                     else:
-                        update_ticket(selected_ticket_id, current_user, **payload)
-                        st.success("Ticket mis à jour.")
-                        if assigne_a:
-                            st.info("Notification simulée : preneur notifié à l'attribution.")
+                        for _, row in comments_df.iterrows():
+                            with st.container(border=True):
+                                st.write(f"**{row['auteur']}** — {row['created_at']}")
+                                st.write(row['contenu'])
 
-                st.markdown("### Commentaires")
-                comments_df = get_comments(selected_ticket_id)
-                if comments_df.empty:
-                    st.caption("Aucun commentaire.")
-                else:
-                    for _, row in comments_df.iterrows():
-                        with st.container(border=True):
-                            st.write(f"**{row['auteur']}** — {row['created_at']}")
-                            st.write(row['contenu'])
+                    new_comment = st.text_area("Ajouter un commentaire", key=f"comment_{selected_ticket_id}")
+                    if st.button("Publier le commentaire"):
+                        if new_comment.strip():
+                            add_comment(selected_ticket_id, current_user, new_comment.strip())
+                            st.success("Commentaire ajouté.")
+                            st.rerun()
 
-                new_comment = st.text_area("Ajouter un commentaire", key=f"comment_{selected_ticket_id}")
-                if st.button("Publier le commentaire"):
-                    if new_comment.strip():
-                        add_comment(selected_ticket_id, current_user, new_comment.strip())
-                        st.success("Commentaire ajouté.")
-
-                st.markdown("### Journalisation")
-                logs_df = get_logs(selected_ticket_id)
-                st.dataframe(logs_df, use_container_width=True, hide_index=True)
+                    st.markdown("### Journalisation")
+                    logs_df = get_logs(selected_ticket_id)
+                    st.dataframe(logs_df, use_container_width=True, hide_index=True)
 
 with onglet3:
     st.subheader("Tableau de bord minimal")
@@ -582,8 +723,8 @@ with onglet3:
         st.markdown("### Top récurrences (mots du titre)")
         stopwords = {"de", "du", "la", "le", "les", "des", "et", "en", "pour", "sur", "dans", "a", "au"}
         words = []
-        for titre in df_copy["titre"].fillna(""):
-            for word in titre.lower().replace("/", " ").replace("-", " ").split():
+        for titre_item in df_copy["titre"].fillna(""):
+            for word in titre_item.lower().replace("/", " ").replace("-", " ").split():
                 cleaned = word.strip(" ,.;:!?()[]{}'\"")
                 if len(cleaned) > 3 and cleaned not in stopwords:
                     words.append(cleaned)
