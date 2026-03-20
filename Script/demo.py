@@ -282,12 +282,103 @@ def seed_demo_data():
     add_comment(t2, "tech_app_1", "Incident reproduit, analyse des logs applicatifs")
 
 
-st.set_page_config(page_title="Ticketing interne — Démo MVP", layout="wide")
+st.set_page_config(
+    page_title="Ticketing interne — Démo MVP",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+LOGO_PATH = "BEAM_LOGO_DEF_NOIR.png"
+
+st.markdown(
+    """
+    <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        .stApp {
+            background: linear-gradient(180deg, #f7f9fc 0%, #eef3f9 100%);
+        }
+        .block-container {
+            padding-top: 1.2rem;
+            padding-bottom: 1.2rem;
+            max-width: 1200px;
+        }
+        div[data-testid="stMetric"] {
+            background: white;
+            border: 1px solid #d9e2f2;
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+        }
+        div.stButton > button {
+            border-radius: 12px;
+            border: none;
+            background: #0f4c81;
+            color: white;
+            font-weight: 600;
+            padding: 0.6rem 1rem;
+        }
+        div.stButton > button:hover {
+            background: #0c3d68;
+            color: white;
+        }
+        div[data-testid="stFileUploader"] section,
+        div[data-testid="stTextInputRootElement"],
+        div[data-testid="stTextAreaRootElement"],
+        div[data-testid="stSelectbox"] {
+            border-radius: 12px;
+        }
+        .top-banner {
+            background: white;
+            border: 1px solid #d9e2f2;
+            border-radius: 20px;
+            padding: 18px 22px;
+            margin-bottom: 18px;
+            box-shadow: 0 6px 20px rgba(15,76,129,0.08);
+        }
+        .top-banner h1 {
+            margin: 0;
+            color: #12344d;
+            font-size: 2rem;
+        }
+        .top-banner p {
+            margin: 6px 0 0 0;
+            color: #486581;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+if os.path.exists(LOGO_PATH):
+    c_logo, c_title = st.columns([1, 5])
+    with c_logo:
+        st.image(LOGO_PATH, width=120)
+    with c_title:
+        st.markdown(
+            """
+            <div class="top-banner">
+                <h1>Ticketing interne — Démo MVP</h1>
+                <p>Prototype Python / Streamlit personnalisé aux couleurs de l'entreprise</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+else:
+    st.markdown(
+        """
+        <div class="top-banner">
+            <h1>Ticketing interne — Démo MVP</h1>
+            <p>Prototype Python / Streamlit personnalisé aux couleurs de l'entreprise</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 init_db()
 seed_demo_data()
 
-st.title("Ticketing interne — Démo MVP")
-st.caption("Prototype Python / Streamlit pour démonstration interne")
+# En-tête personnalisé déjà affiché plus haut
 
 with st.sidebar:
     st.header("Contexte démo")
@@ -310,7 +401,11 @@ with onglet1:
     titre = st.text_input("Titre *")
     typage = st.radio("Typage *", TYPES, horizontal=True)
     commentaire = st.text_area("Commentaire")
-    photo = st.file_uploader("Photo", type=["png", "jpg", "jpeg"])
+    photo_mode = st.radio("Mode photo", ["Prendre une photo", "Téléverser une image"], horizontal=True)
+    if photo_mode == "Prendre une photo":
+        photo = st.camera_input("Photo en direct")
+    else:
+        photo = st.file_uploader("Photo", type=["png", "jpg", "jpeg"])
 
     if titre:
         suggestions = suggest_duplicates(titre, typage)
