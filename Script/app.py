@@ -3,7 +3,7 @@ import streamlit as st
 from core.db import init_db
 from core.styles import apply_global_styles
 from core.tickets import seed_demo_data
-
+from core.app_config_service import get_pages_config_map
 
 # --------------------------------------------------
 # ⚙️ Configuration générale de l'application
@@ -41,6 +41,15 @@ is_logged_in = bool(st.session_state.role)
 is_simple_user = st.session_state.role == "Utilisateur"
 is_backoffice = is_logged_in and not is_simple_user
 
+pages_config = get_pages_config_map()
+
+def cfg(page_key, default_label, default_icon, default_visible=True):
+    page_cfg = pages_config.get(page_key, {})
+    return {
+        "label": page_cfg.get("label", default_label),
+        "icon": page_cfg.get("icon", default_icon),
+        "is_visible": bool(page_cfg.get("is_visible", default_visible)),
+    }
 
 # --------------------------------------------------
 # 📄 Déclaration des pages
@@ -53,11 +62,13 @@ page_login = st.Page(
     visibility="visible",
 )
 
+home_cfg = cfg("home", "Accueil", "🏠", True)
+
 page_home = st.Page(
     "pages/0_Accueil.py",
-    title="Accueil",
-    icon="🏠",
-    visibility="visible" if is_logged_in else "hidden",
+    title=home_cfg["label"],
+    icon=home_cfg["icon"],
+    visibility="visible" if (is_logged_in and home_cfg["is_visible"]) else "hidden",
 )
 
 page_create = st.Page(

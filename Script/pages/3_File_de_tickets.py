@@ -14,6 +14,7 @@ from core.tickets import (
     update_ticket,
 )
 from core.db import now_iso
+from core.app_config_service import get_active_subtypes_by_type
 
 
 # --------------------------------------------------
@@ -267,7 +268,7 @@ with left_panel:
                         #{int(row['id'])} — {row['titre']}
                     </div>
                     <div style="color: #486581; font-size: 0.92rem; margin-bottom: 6px;">
-                        {row['typage']} · {row['priorite'] if pd.notna(row['priorite']) and row['priorite'] else 'Sans priorité'}
+                        {row['typage']} · {row['sous_type'] if pd.notna(row['sous_type']) and row['sous_type'] else '-'} · {row['priorite'] if pd.notna(row['priorite']) and row['priorite'] else 'Sans priorité'}
                     </div>
                     <div style="color: #6b7c93; font-size: 0.85rem;">
                         Demandeur : {row['demandeur']} · Assigné : {row['assigne_a'] if pd.notna(row['assigne_a']) and row['assigne_a'] else '-'}
@@ -320,6 +321,7 @@ with right_panel:
             with left:
                 st.write(f"**Titre** : {ticket['titre']}")
                 st.write(f"**Type** : {ticket['typage']}")
+                st.write(f"**Sous-type** : {ticket['sous_type'] or '-'}")
                 st.write(f"**Statut** : {ticket['statut']}")
                 st.write(f"**Priorité** : {ticket['priorite'] or '-'}")
                 st.write(f"**Demandeur** : {ticket['demandeur']}")
@@ -341,6 +343,26 @@ with right_panel:
             a1, a2 = st.columns(2)
 
             with a1:
+                new_type = st.selectbox(
+                    "Type",
+                    TYPES,
+                    index=TYPES.index(ticket["typage"]) if ticket["typage"] in TYPES else 0,
+                )
+
+                available_subtypes = get_active_subtypes_by_type(new_type)
+
+                current_sous_type = (
+                    ticket["sous_type"]
+                    if ticket["sous_type"] in available_subtypes
+                    else (available_subtypes[0] if available_subtypes else "")
+                )
+
+                new_sous_type = st.selectbox(
+                    "Sous-type",
+                    available_subtypes if available_subtypes else [""],
+                    index=available_subtypes.index(current_sous_type) if current_sous_type in available_subtypes else 0,
+                )
+
                 new_statut = st.selectbox(
                     "Nouveau statut",
                     STATUTS,
@@ -355,27 +377,34 @@ with right_panel:
                     ),
                 )
 
+            with a2:
                 assigne_a = st.text_input("Assigner à", value=ticket["assigne_a"] or "")
 
-            with a2:
-                dispatcheur = st.text_input("Dispatcheur", value=ticket["dispatcheur"] or "")
                 ticket_maitre_id = st.text_input(
                     "Ticket maître (si doublon)",
                     value=ticket["ticket_maitre_id"] or "",
                 )
+
                 motif_resolution = st.text_input(
                     "Motif de résolution",
                     value=ticket["motif_resolution"] or "",
                 )
 
+            # Dispatcheur calculé automatiquement selon le type
+            dispatcheur_auto = "DIO" if new_type == "Infra" else "DSN"
+
+            st.caption(f"Dispatcheur attribué automatiquement : {dispatcheur_auto}")
+
             if st.button("Enregistrer les changements"):
                 payload = {
+                    "typage": new_type,
                     "statut": new_statut,
                     "priorite": new_priorite or None,
                     "assigne_a": assigne_a or None,
-                    "dispatcheur": dispatcheur or None,
+                    "dispatcheur": dispatcheur_auto,
                     "ticket_maitre_id": int(ticket_maitre_id) if str(ticket_maitre_id).strip().isdigit() else None,
                     "motif_resolution": motif_resolution or None,
+                    "sous_type": new_sous_type or None,
                 }
 
                 if new_statut == "Clôturé":

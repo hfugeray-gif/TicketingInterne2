@@ -1,10 +1,12 @@
 import os
 import streamlit as st
 import base64
-from core.config import HEADER_BANNER_PATH
+from core.config import HEADER_BANNER_PATH, LOGO_MENU_PATH
 
 
 def apply_global_styles():
+
+
     """
     Applique le style global de l'application.
     """
@@ -110,6 +112,7 @@ def apply_global_styles():
                     display: block !important;
                 }
             }
+
 
             /* -----------------------------
                Métriques / dataframes
@@ -342,6 +345,25 @@ def apply_global_styles():
                 object-fit: cover;
             }
 
+            /* =========================
+            FIX SCROLL GLOBAL
+            ========================= */
+
+            html, body, .stApp {
+                height: auto !important;
+                overflow: auto !important;
+            }
+
+            /* Force le scroll réel */
+            section.main {
+                overflow: visible !important;
+            }
+
+            /* IMPORTANT : espace en bas pour éviter coupure */
+            .block-container {
+                padding-bottom: 120px !important;
+            }
+
             /* -----------------------------
                Responsive
             ------------------------------ */
@@ -374,6 +396,43 @@ def apply_global_styles():
                     border-radius: 16px;
                 }
             }
+        </style>
+        """,
+
+
+        unsafe_allow_html=True,
+
+        
+    )
+    logo_base64 = ""
+    
+
+    if os.path.exists(LOGO_MENU_PATH):
+        logo_base64 = get_base64_image(LOGO_MENU_PATH)
+
+    st.markdown(
+        f"""
+        <style>
+            /* Logo dans la barre du haut */
+            [data-testid="stHeader"] {{
+                position: relative;
+                padding-left: 60px !important;
+            }}
+
+            [data-testid="stHeader"]::before {{
+                content: "";
+                position: absolute;
+                left: 4px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 70px;
+                height: 70px;
+                background-image: url("data:image/png;base64,{logo_base64}");
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                z-index: 10;
+            }}
         </style>
         """,
         unsafe_allow_html=True,

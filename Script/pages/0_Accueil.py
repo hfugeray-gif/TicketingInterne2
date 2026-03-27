@@ -212,7 +212,7 @@ cards = [
     {
         "title": "Pilotage",
         "text": "Suivre les KPI, le backlog, les tendances et les points d’attention.",
-        "page_key": "pilotage",
+        "page_key": "dashboard",
         "tag": "Vision",
         "roles": ["Admin", "Supervision"],
     },

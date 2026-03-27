@@ -1,7 +1,7 @@
 import streamlit as st
 
-from core.auth import ensure_logged_in, get_current_role, get_current_user, logout
-from core.config import ROLES, TYPES
+from core.auth import ensure_logged_in, get_current_user
+from core.config import TYPES
 from core.styles import apply_global_styles, render_header
 from core.tickets import create_ticket, suggest_duplicates
 
@@ -31,10 +31,6 @@ st.subheader("Création rapide")
 # --------------------------------------------------
 # 🧠 Initialisation de l'état de session du formulaire
 # --------------------------------------------------
-# Ces clés permettent :
-# - de mémoriser les valeurs du formulaire
-# - de réinitialiser proprement après création
-
 if "create_titre" not in st.session_state:
     st.session_state.create_titre = ""
 
@@ -44,20 +40,27 @@ if "create_typage" not in st.session_state:
 if "create_commentaire" not in st.session_state:
     st.session_state.create_commentaire = ""
 
-
 if "reset_create_form" not in st.session_state:
     st.session_state.reset_create_form = False
+
+if "create_success_message" not in st.session_state:
+    st.session_state.create_success_message = None
 
 # --------------------------------------------------
 # 🔄 Réinitialisation du formulaire au run suivant
 # --------------------------------------------------
-# On reset les champs AVANT d'instancier les widgets,
-# sinon Streamlit lève une exception.
 if st.session_state.reset_create_form:
     st.session_state.create_titre = ""
     st.session_state.create_typage = TYPES[0]
     st.session_state.create_commentaire = ""
     st.session_state.reset_create_form = False
+
+# --------------------------------------------------
+# ✅ Message de succès après création
+# --------------------------------------------------
+if st.session_state.create_success_message:
+    st.success(st.session_state.create_success_message)
+    st.session_state.create_success_message = None
 
 # --------------------------------------------------
 # 📋 Widgets du formulaire
@@ -66,13 +69,9 @@ titre = st.text_input("Titre *", key="create_titre")
 typage = st.radio("Typage *", TYPES, horizontal=True, key="create_typage")
 commentaire = st.text_area("Commentaire", key="create_commentaire")
 
-
+# --------------------------------------------------
 # 📷 Ajout d'une image
 # --------------------------------------------------
-# Sur téléphone, le sélecteur natif permet généralement :
-# - prendre une photo
-# - choisir depuis la galerie
-# - choisir un fichier
 photo = st.file_uploader(
     "Photo",
     type=["png", "jpg", "jpeg"],
@@ -103,9 +102,9 @@ if st.button("Créer le ticket", type="primary"):
             photo_file=photo,
         )
 
-        st.success(f"Ticket #{ticket_id} créé avec succès.")
-        st.info("Notification simulée : demandeur notifié à la création.")
+        # Message affiché au run suivant
+        st.session_state.create_success_message = f"✅ Ticket #{ticket_id} créé avec succès."
 
-        # Demande de reset du formulaire au prochain run
+        # Reset du formulaire au prochain run
         st.session_state.reset_create_form = True
         st.rerun()

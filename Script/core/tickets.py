@@ -7,6 +7,11 @@ import pandas as pd
 from core.config import UPLOAD_DIR
 from core.db import get_conn, now_iso
 
+from core.notifications import (
+    notify_dispatch_new_ticket,
+    notify_technician_assignment,
+    notify_user_closure,
+)
 
 def log_action(ticket_id, action, details, auteur):
     """
@@ -66,6 +71,13 @@ def create_ticket(titre, typage, commentaire, demandeur, photo_file=None):
     # Journalisation de la création
     log_action(ticket_id, "Création", f"Ticket créé ({typage})", demandeur)
 
+    notify_dispatch_new_ticket(
+        ticket_id=ticket_id,
+        titre=titre,
+        typage=typage,
+        demandeur=demandeur,
+    )
+
     return ticket_id
 
 
@@ -96,12 +108,8 @@ def add_comment(ticket_id, auteur, contenu):
 def update_ticket(ticket_id, auteur, **fields):
     """
     Met à jour un ticket avec les champs passés en arguments nommés.
-
-    Exemple :
-    update_ticket(12, "admin", statut="En cours", priorite="Haute")
-
-    La fonction compare l'avant/après pour journaliser précisément
-    les changements effectués.
+    Journalise précisément les changements effectués.
+    Déclenche aussi les notifications email utiles.
     """
     if not fields:
         return
@@ -117,7 +125,6 @@ def update_ticket(ticket_id, auteur, **fields):
     values = []
     changed = []
 
-    # Construction dynamique de la requête UPDATE
     for key, value in fields.items():
         updates.append(f"{key} = ?")
         values.append(value)
@@ -126,18 +133,50 @@ def update_ticket(ticket_id, auteur, **fields):
         if old_value != value:
             changed.append(f"{key}: {old_value} -> {value}")
 
-    # Mise à jour systématique du updated_at
     updates.append("updated_at = ?")
     values.append(now_iso())
     values.append(ticket_id)
 
     cur.execute(f"UPDATE tickets SET {', '.join(updates)} WHERE id = ?", values)
     conn.commit()
+
+    # Relire le ticket après update
+    cur.execute("SELECT * FROM tickets WHERE id = ?", (ticket_id,))
+    after = cur.fetchone()
+
     conn.close()
 
-    # Journalisation seulement si quelque chose a vraiment changé
     if changed:
         log_action(ticket_id, "Mise à jour", " | ".join(changed), auteur)
+
+    # --------------------------------------------------
+    # Notifications email
+    # --------------------------------------------------
+
+    # 1. Ticket assigné à un technicien
+    before_assigne = before["assigne_a"] if before else None
+    after_assigne = after["assigne_a"] if after else None
+
+    if after_assigne and before_assigne != after_assigne:
+        notify_technician_assignment(
+            ticket_id=ticket_id,
+            titre=after["titre"],
+            technicien=after_assigne,
+            statut=after["statut"],
+            priorite=after["priorite"],
+        )
+
+    # 2. Ticket clôturé
+    before_statut = before["statut"] if before else None
+    after_statut = after["statut"] if after else None
+
+    if before_statut != "Clôturé" and after_statut == "Clôturé":
+        notify_user_closure(
+            ticket_id=ticket_id,
+            titre=after["titre"],
+            demandeur=after["demandeur"],
+            motif_resolution=after["motif_resolution"],
+        )
 
 
 def get_tickets():
@@ -205,6 +244,7 @@ def suggest_duplicates(titre, typage):
     - un filtre sur le même type de ticket
     """
     df = get_tickets()
+    df = df[df["statut"] != "Clôturé"]
 
     if df.empty:
         return pd.DataFrame()
