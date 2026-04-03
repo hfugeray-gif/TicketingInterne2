@@ -4,7 +4,6 @@ from core.auth import ensure_logged_in, get_current_role, get_current_user, logo
 from core.styles import apply_global_styles, render_header
 from core.api_client import api_get
 
-me = api_get("/me")
 
 # --------------------------------------------------
 # ⚙️ Configuration de la page
@@ -105,16 +104,30 @@ st.markdown(
 )
 
 # --------------------------------------------------
-# 👤 Données de profil simulées
+# 👤 Récupération de l'identité via API
 # --------------------------------------------------
-role = get_current_role()
-current_user = get_current_user()
+try:
+    me = api_get("/me")
+except RuntimeError:
+    # Fallback propre tant que l'API /me n'est pas disponible
+    current_user = get_current_user()
+    current_role = get_current_role()
+    me = {
+        "username": current_user,
+        "email": f"{current_user}@beam.local",
+        "role": current_role,
+        "authenticated": True,
+    }
 
-# Ces champs pourront être remplacés plus tard par le SSO
-email = f"{current_user}@beam.local"
+role = me.get("role", get_current_role())
+current_user = me.get("username", get_current_user())
+email = me.get("email", f"{current_user}@beam.local")
+
+# Ces champs restent simulés tant que le vrai SSO n'est pas branché
 service = "Support interne"
 entite = "Bordeaux Events And More"
-mode_auth = "SSO simulé"
+mode_auth = "API / identité simulée"
+
 permissions = {
     "Utilisateur": "Création et consultation de ses tickets",
     "Dispatcheur DIO": "Création, consultation et traitement de la file",
@@ -128,7 +141,7 @@ permissions = {
 # 🧾 En-tête
 # --------------------------------------------------
 st.markdown(
-    f"""
+    """
     <div class="profile-card">
         <h2>Profil utilisateur</h2>
         <p>Informations générales du compte connecté et périmètre d’accès actuel.</p>
@@ -140,7 +153,10 @@ st.markdown(
 # --------------------------------------------------
 # ℹ️ Informations générales
 # --------------------------------------------------
-st.markdown('<div class="profile-section-title">Informations du profil</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="profile-section-title">Informations du profil</div>',
+    unsafe_allow_html=True,
+)
 
 st.markdown(
     f"""
@@ -172,7 +188,10 @@ st.markdown(
 # --------------------------------------------------
 # 🔐 Accès / permissions
 # --------------------------------------------------
-st.markdown('<div class="profile-section-title">Périmètre d’accès</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="profile-section-title">Périmètre d’accès</div>',
+    unsafe_allow_html=True,
+)
 
 st.markdown(
     f"""
@@ -192,14 +211,23 @@ st.markdown(
 st.markdown(
     """
     <div class="profile-note">
-        Cette page est prévue pour recevoir ultérieurement les informations issues du SSO :
-        nom complet, email réel, entité, service, groupe de sécurité, rôle métier, et autres
-        attributs d’identité transmis par l’authentification d’entreprise.
+        Cette page est prête à consommer une identité issue du backend via l’endpoint <strong>/me</strong>.
+        Elle pourra ensuite être branchée sur le SSO d’entreprise pour récupérer les informations réelles :
+        nom complet, email, entité, service, groupes de sécurité et rôle métier.
     </div>
     """,
     unsafe_allow_html=True,
 )
 
+# --------------------------------------------------
+# 🧪 Diagnostic API léger
+# --------------------------------------------------
+with st.expander("Diagnostic identité"):
+    st.json(me)
+
+# --------------------------------------------------
+# 🧭 Actions
+# --------------------------------------------------
 st.markdown("### Actions")
 
 col1, col2 = st.columns(2)

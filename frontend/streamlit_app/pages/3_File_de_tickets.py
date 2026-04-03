@@ -5,17 +5,17 @@ import pandas as pd
 from core.auth import require_backoffice_access, get_current_role, get_current_user, logout
 from core.config import PRIORITES, STATUTS, TYPES, SITES
 from core.styles import apply_global_styles, render_header
-from core.tickets import (
-    add_comment,
-    get_comments,
-    get_logs,
-    get_ticket,
-    get_tickets,
-    update_ticket,
-    add_comment_with_notification,
-    merge_tickets_into_master,
-    get_child_tickets,
-    remove_ticket_from_master,
+from core.tickets import add_comment_with_notification
+from core.api_tickets import (
+    api_add_comment,
+    api_get_child_tickets,
+    api_get_comments,
+    api_get_journal,
+    api_get_ticket,
+    api_get_tickets,
+    api_merge_tickets,
+    api_unmerge_ticket,
+    api_update_ticket,
 )
 from core.db import now_iso
 from core.app_config_service import get_active_subtypes_by_type
@@ -156,7 +156,8 @@ if "selected_ticket_id" not in st.session_state:
 # --------------------------------------------------
 # 📥 Chargement des tickets
 # --------------------------------------------------
-df = get_tickets()
+tickets_data = api_get_tickets()
+df = pd.DataFrame(tickets_data) if tickets_data else pd.DataFrame()
 
 if df.empty:
     st.info("Aucun ticket pour le moment.")
@@ -335,7 +336,7 @@ with right_panel:
     if selected_ticket_id is None or selected_ticket_id not in filtered["id"].tolist():
         st.info("Sélectionne un ticket à gauche pour afficher son détail.")
     else:
-        ticket = get_ticket(selected_ticket_id)
+        ticket = api_get_ticket(selected_ticket_id)
 
         if ticket:
             st.markdown("### Détail du ticket")
@@ -360,8 +361,10 @@ with right_panel:
                     st.write(f"**Ticket maître** : #{ticket['ticket_maitre_id']}")
 
             with right:
-                if ticket["photo_path"] and os.path.exists(ticket["photo_path"]):
-                    st.image(ticket["photo_path"], caption="Photo jointe")
+                photo_path = ticket.get("photo_path")
+
+                if photo_path and os.path.exists(photo_path):
+                    st.image(photo_path, caption="Photo jointe")
 
             st.markdown("### Actions")
 
@@ -454,7 +457,7 @@ with right_panel:
                     else:
                         try:
                             payload["closed_at"] = now_iso()
-                            update_ticket(selected_ticket_id, get_current_user(), **payload)
+                            api_update_ticket(selected_ticket_id, payload)
                             st.success("Ticket clôturé et mis à jour.")
                             st.session_state[motif_reset_key] = True
                             st.rerun()
@@ -462,7 +465,7 @@ with right_panel:
                             st.error(str(e))
                 else:
                     try:
-                        update_ticket(selected_ticket_id, get_current_user(), **payload)
+                        api_update_ticket(selected_ticket_id, payload)
                         st.success("Ticket mis à jour.")
                         st.rerun()
                     except ValueError as e:
@@ -489,17 +492,19 @@ with right_panel:
             if st.button("Fusionner dans ce ticket (ticket maître)"):
                 if selected_child_ids:
                     try:
-                        merged_count = merge_tickets_into_master(
+                        merged = api_merge_tickets(
                             master_ticket_id=selected_ticket_id,
                             child_ticket_ids=selected_child_ids,
                             auteur=get_current_user(),
                         )
+                        merged_count = len(merged)
                         st.success(f"{merged_count} ticket(s) fusionné(s) dans ce ticket.")
                         st.rerun()
                     except ValueError as e:
                         st.error(str(e))
 
-            child_df = get_child_tickets(selected_ticket_id)
+            child_data = api_get_child_tickets(selected_ticket_id)
+            child_df = pd.DataFrame(child_data) if child_data else pd.DataFrame()
 
             if not child_df.empty:
                 st.markdown("### Tickets fusionnés (esclaves)")
@@ -509,25 +514,26 @@ with right_panel:
                     hide_index=True,
                 )
 
-            if ticket["statut"] == "Doublon" and ticket["ticket_maitre_id"]:
+            if ticket.get("ticket_maitre_id"):
                 st.markdown("### Gestion du doublon")
 
                 st.info(f"Ce ticket est actuellement rattaché au ticket maître #{ticket['ticket_maitre_id']}.")
 
-                if st.button("Retirer ce ticket du doublon"):
+                if st.button("Retirer ce ticket du maître"):
                     try:
-                        remove_ticket_from_master(
-                            child_ticket_id=selected_ticket_id,
+                        api_unmerge_ticket(
+                            ticket_id=selected_ticket_id,
                             auteur=get_current_user(),
                         )
-                        st.success("Le ticket a été retiré du doublon et redevient autonome.")
+                        st.success("Le ticket a été retiré du ticket maître et redevient autonome.")
                         st.rerun()
-                    except ValueError as e:
+                    except RuntimeError as e:
                         st.error(str(e))
 
             st.markdown("### Commentaires")
 
-            comments_df = get_comments(selected_ticket_id)
+            comments_data = api_get_comments(selected_ticket_id)
+            comments_df = pd.DataFrame(comments_data) if comments_data else pd.DataFrame()
 
             if comments_df.empty:
                 st.caption("Aucun commentaire.")
@@ -551,21 +557,13 @@ with right_panel:
 
             if st.button("Publier le commentaire"):
                 if new_comment.strip():
-                    sent = add_comment_with_notification(
-                        selected_ticket_id,
-                        get_current_user(),
-                        new_comment.strip(),
-                    )
-
+                    api_add_comment(selected_ticket_id, get_current_user(), new_comment.strip())
                     st.session_state[comment_reset_key] = True
-
-                    if sent:
-                        st.success("Commentaire ajouté et notification envoyée.")
-                    else:
-                        st.success("Commentaire ajouté.")
+                    st.success("Commentaire ajouté.")
                     st.rerun()
 
             st.markdown("### Journalisation")
 
-            logs_df = get_logs(selected_ticket_id)
+            logs_data = api_get_journal(selected_ticket_id)
+            logs_df = pd.DataFrame(logs_data) if logs_data else pd.DataFrame()
             st.dataframe(logs_df, use_container_width=True, hide_index=True)

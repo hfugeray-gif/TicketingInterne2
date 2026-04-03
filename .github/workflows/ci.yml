@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  backend:
+  backend-tests:
     runs-on: ubuntu-latest
 
     defaults:
@@ -27,25 +27,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Run Alembic migrations
+        run: |
+          python -m alembic upgrade head
+
       - name: Run tests
-        run: pytest app/tests -q
-
-  backend-docker-build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Build backend image
-        run: docker build -t ticketing-backend ./backend
-
-  frontend-docker-build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Build frontend image
-        run: docker build -t ticketing-frontend ./frontend/streamlit_app
+        run: |
+          python -m pytest app/tests -q

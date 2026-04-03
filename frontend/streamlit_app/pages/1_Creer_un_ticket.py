@@ -3,8 +3,8 @@ import streamlit as st
 from core.auth import ensure_logged_in, get_current_user
 from core.config import TYPES, SITES
 from core.styles import apply_global_styles, render_header
-from core.tickets import create_ticket, suggest_duplicates
-
+from core.tickets import suggest_duplicates
+from core.api_tickets import api_create_ticket
 
 # --------------------------------------------------
 # ⚙️ Configuration générale de la page
@@ -99,18 +99,19 @@ if st.button("Créer le ticket", type="primary"):
     if not titre.strip():
         st.error("Le titre est obligatoire.")
     else:
-        ticket_id = create_ticket(
-            titre=titre.strip(),
-            typage=typage,
-            site=site,
-            commentaire=commentaire.strip(),
-            demandeur=get_current_user(),
-            photo_file=photo,
-        )
+        try:
+            created_ticket = api_create_ticket(
+                titre=titre.strip(),
+                typage=typage,
+                site=site,
+                commentaire=commentaire.strip(),
+                demandeur=get_current_user(),
+            )
 
-        # Message affiché au run suivant
-        st.session_state.create_success_message = f"✅ Ticket #{ticket_id} créé avec succès."
+            ticket_id = created_ticket["id"]
 
-        # Reset du formulaire au prochain run
-        st.session_state.reset_create_form = True
-        st.rerun()
+            st.session_state.create_success_message = f"✅ Ticket #{ticket_id} créé avec succès."
+            st.session_state.reset_create_form = True
+            st.rerun()
+        except RuntimeError as e:
+            st.error(str(e))

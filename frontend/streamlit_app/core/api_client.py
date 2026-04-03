@@ -14,6 +14,22 @@ def _build_headers() -> dict:
     return headers
 
 
+def _handle_response(response: requests.Response):
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as e:
+        try:
+            detail = response.json().get("detail", response.text)
+        except Exception:
+            detail = response.text
+        raise RuntimeError(detail) from e
+
+    if response.status_code == 204:
+        return None
+
+    return response.json()
+
+
 def api_get(path: str, params: dict | None = None):
     response = requests.get(
         f"{API_BASE_URL}{path}",
@@ -21,8 +37,7 @@ def api_get(path: str, params: dict | None = None):
         headers=_build_headers(),
         timeout=15,
     )
-    response.raise_for_status()
-    return response.json()
+    return _handle_response(response)
 
 
 def api_post(path: str, payload: dict):
@@ -32,8 +47,7 @@ def api_post(path: str, payload: dict):
         headers=_build_headers(),
         timeout=15,
     )
-    response.raise_for_status()
-    return response.json()
+    return _handle_response(response)
 
 
 def api_patch(path: str, payload: dict):
@@ -43,5 +57,4 @@ def api_patch(path: str, payload: dict):
         headers=_build_headers(),
         timeout=15,
     )
-    response.raise_for_status()
-    return response.json()
+    return _handle_response(response)

@@ -5,8 +5,14 @@ import pandas as pd
 from core.auth import ensure_logged_in, get_current_role, get_current_user, logout, can_access_backoffice
 from core.config import PRIORITES, TYPES, SITES
 from core.styles import apply_global_styles, render_header
-from core.tickets import get_tickets, get_ticket, get_comments, get_logs, add_comment_with_notification
-
+from core.api_tickets import (
+    api_add_comment,
+    api_get_child_tickets,
+    api_get_comments,
+    api_get_journal,
+    api_get_ticket,
+    api_get_tickets,
+)
 
 # --------------------------------------------------
 # ⚙️ Configuration générale de la page
@@ -45,7 +51,8 @@ if "selected_my_ticket_id" not in st.session_state:
 # --------------------------------------------------
 # 📥 Chargement et filtrage des tickets utilisateur
 # --------------------------------------------------
-df = get_tickets()
+tickets_data = api_get_tickets()
+df = pd.DataFrame(tickets_data) if tickets_data else pd.DataFrame()
 current_user = get_current_user()
 
 if not df.empty:
@@ -202,7 +209,7 @@ with right_panel:
     if selected_ticket_id is None or selected_ticket_id not in filtered["id"].tolist():
         st.info("Sélectionne un ticket à gauche pour afficher son détail.")
     else:
-        ticket = get_ticket(selected_ticket_id)
+        ticket = api_get_ticket(selected_ticket_id)
 
         if ticket:
             st.markdown("### Détail du ticket")
@@ -227,8 +234,10 @@ with right_panel:
                     st.write(f"**Ticket maître** : #{ticket['ticket_maitre_id']}")
 
             with right:
-                if ticket["photo_path"] and os.path.exists(ticket["photo_path"]):
-                    st.image(ticket["photo_path"], caption="Photo jointe")
+                photo_path = ticket.get("photo_path")
+
+                if photo_path and os.path.exists(photo_path):
+                    st.image(photo_path, caption="Photo jointe")
 
             # ------------------------------------------
             # 🔒 Zone d'information selon le profil
@@ -249,7 +258,8 @@ with right_panel:
             # ------------------------------------------
             st.markdown("### Commentaires")
 
-            comments_df = get_comments(selected_ticket_id)
+            comments_data = api_get_comments(selected_ticket_id)
+            comments_df = pd.DataFrame(comments_data) if comments_data else pd.DataFrame()
 
             if comments_df.empty:
                 st.caption("Aucun commentaire.")
@@ -273,24 +283,24 @@ with right_panel:
 
             if st.button("Publier le commentaire"):
                 if new_comment.strip():
-                    sent = add_comment_with_notification(
-                        selected_ticket_id,
-                        current_user,
-                        new_comment.strip(),
-                    )
+                    try:
+                        api_add_comment(
+                            selected_ticket_id,
+                            current_user,
+                            new_comment.strip(),
+                        )
 
-                    st.session_state[comment_reset_key] = True
-
-                    if sent:
-                        st.success("Commentaire ajouté et notification envoyée.")
-                    else:
+                        st.session_state[comment_reset_key] = True
                         st.success("Commentaire ajouté.")
-                    st.rerun()
+                        st.rerun()
+                    except RuntimeError as e:
+                        st.error(str(e))
 
             # ------------------------------------------
             # 🧾 Journalisation
             # ------------------------------------------
             st.markdown("### Journalisation")
 
-            logs_df = get_logs(selected_ticket_id)
+            logs_data = api_get_journal(selected_ticket_id)
+            logs_df = pd.DataFrame(logs_data) if logs_data else pd.DataFrame()
             st.dataframe(logs_df, use_container_width=True, hide_index=True)
