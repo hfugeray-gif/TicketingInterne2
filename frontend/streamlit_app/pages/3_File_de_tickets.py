@@ -2,10 +2,10 @@ import os
 import streamlit as st
 import pandas as pd
 
-from core.auth import require_backoffice_access, get_current_role, get_current_user, logout
+from core.auth import require_backoffice_access, get_current_user
 from core.config import PRIORITES, STATUTS, TYPES, SITES
 from core.styles import apply_global_styles, render_header
-from core.tickets import add_comment_with_notification
+
 from core.api_tickets import (
     api_add_comment,
     api_get_child_tickets,
@@ -17,7 +17,7 @@ from core.api_tickets import (
     api_unmerge_ticket,
     api_update_ticket,
 )
-from core.db import now_iso
+
 from core.app_config_service import get_active_subtypes_by_type
 
 
@@ -456,7 +456,7 @@ with right_panel:
                         st.error("Le motif de résolution est obligatoire pour clôturer.")
                     else:
                         try:
-                            payload["closed_at"] = now_iso()
+                            
                             api_update_ticket(selected_ticket_id, payload)
                             st.success("Ticket clôturé et mis à jour.")
                             st.session_state[motif_reset_key] = True

@@ -2,7 +2,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from core.auth import require_backoffice_access, get_current_role, get_current_user, logout
+from core.auth import require_backoffice_access,  get_current_user
 from core.styles import apply_global_styles, render_header
 from core.tickets import get_tickets
 
