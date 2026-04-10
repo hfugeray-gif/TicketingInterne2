@@ -16,6 +16,12 @@ from app.services.ticket_service import (
     validate_ticket_creation_data,
 )
 
+from app.services.notification_service import (
+    notify_dispatch_new_ticket,
+    notify_technician_assignment,
+    notify_user_closure,
+)
+
 router = APIRouter(prefix="/tickets", tags=["tickets"])
 
 
@@ -39,6 +45,7 @@ def create_ticket_route(payload: TicketCreate, db: Session = Depends(get_db)):
             details=f"Ticket créé ({ticket.typage} - {ticket.site or '-'})",
             auteur=ticket.demandeur,
         )
+        notify_dispatch_new_ticket(ticket)
         return ticket
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -64,6 +71,7 @@ def update_ticket_route(ticket_id: int, payload: TicketUpdate, db: Session = Dep
         raise HTTPException(status_code=404, detail="Ticket introuvable.")
 
     previous_status = ticket.statut
+    previous_assignee = ticket.assigne_a
 
     try:
         updates = payload.model_dump(exclude_unset=True)
@@ -78,17 +86,11 @@ def update_ticket_route(ticket_id: int, payload: TicketUpdate, db: Session = Dep
             auteur="system_api",
         )
 
+        if previous_assignee != ticket.assigne_a and ticket.assigne_a:
+            notify_technician_assignment(ticket)
+
         if previous_status != "Clôturé" and ticket.statut == "Clôturé":
-            children = cascade_close_children(db, ticket)
-            db.commit()
-            for child in children:
-                log_action(
-                    db,
-                    ticket_id=child.id,
-                    action="Clôture automatique",
-                    details=f"Ticket enfant clôturé suite à la clôture du maître #{ticket.id}",
-                    auteur="system_api",
-                )
+            notify_user_closure(ticket)
 
         return ticket
     except ValueError as e:

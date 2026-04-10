@@ -1,5 +1,5 @@
 from pathlib import Path
-
+from pydantic_settings import BaseSettings, SettingsConfigDict
 # -----------------------------
 # 📁 Gestion des chemins projet
 # -----------------------------
@@ -82,3 +82,31 @@ TECH_EMAILS = {
     "tech_app_1": DEMO_EMAIL,
     "demo_user": DEMO_EMAIL,
 }
+
+
+
+class Settings(BaseSettings):
+    app_name: str = "Ticketing API"
+    environment: str = "dev"
+    debug: bool = True
+
+    database_url: str = "sqlite:///./app.db"
+
+    smtp_host: str = "localhost"
+    smtp_port: int = 1025
+    smtp_use_tls: bool = False
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    smtp_from: str = "ticketing@beam.local"
+
+    app_base_url: str = "http://127.0.0.1:8501"
+    emails_enabled: bool = False
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+
+settings = Settings()
