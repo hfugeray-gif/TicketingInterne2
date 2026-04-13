@@ -6,11 +6,7 @@ from core.app_config_service import get_pages_config, get_subtypes_config
 from core.auth import require_backoffice_access
 from core.styles import apply_global_styles, render_header
 
-st.set_page_config(
-    page_title="Administration — Ticketing interne",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+
 
 require_backoffice_access()
 apply_global_styles()

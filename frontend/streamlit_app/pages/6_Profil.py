@@ -8,11 +8,6 @@ from core.api_client import api_get
 # --------------------------------------------------
 # ⚙️ Configuration de la page
 # --------------------------------------------------
-st.set_page_config(
-    page_title="Profil — Ticketing interne",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
 
 # --------------------------------------------------
 # 🔐 Vérification session

@@ -14,14 +14,7 @@ from core.api_tickets import (
     api_get_tickets,
 )
 
-# --------------------------------------------------
-# ⚙️ Configuration générale de la page
-# --------------------------------------------------
-st.set_page_config(
-    page_title="Mes tickets — Ticketing interne",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+
 
 # Vérifie que l'utilisateur est bien passé par l'accueil
 ensure_logged_in()

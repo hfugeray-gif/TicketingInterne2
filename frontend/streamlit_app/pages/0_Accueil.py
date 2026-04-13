@@ -6,15 +6,6 @@ from core.styles import apply_global_styles, render_header
 from core.app_config_service import get_pages_config_map
 
 # --------------------------------------------------
-# ⚙️ Configuration de la page
-# --------------------------------------------------
-st.set_page_config(
-    page_title="Accueil — Ticketing interne",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
-# --------------------------------------------------
 # 🔐 Vérification session
 # --------------------------------------------------
 ensure_logged_in()

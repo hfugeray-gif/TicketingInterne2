@@ -5,14 +5,6 @@ from core.config import ROLES
 from core.styles import apply_global_styles, render_header
 
 
-# --------------------------------------------------
-# ⚙️ Configuration de la page
-# --------------------------------------------------
-st.set_page_config(
-    page_title="Accueil — Ticketing interne",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
 
 # --------------------------------------------------
 # 🎨 Habillage global

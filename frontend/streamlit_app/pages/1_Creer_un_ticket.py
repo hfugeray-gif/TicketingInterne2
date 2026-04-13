@@ -9,11 +9,6 @@ from core.auth import ensure_logged_in, get_current_user
 from core.config import SITES, TYPES
 from core.styles import apply_global_styles, render_header
 
-st.set_page_config(
-    page_title="Créer un ticket — Ticketing interne",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
 
 ensure_logged_in()
 apply_global_styles()

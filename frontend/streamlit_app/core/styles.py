@@ -76,8 +76,10 @@ def apply_global_styles():
                 display: none !important;
             }
 
+            /* NE PAS cacher les boutons de header :
+            ils portent la navigation du haut */
             button[kind="header"] {
-                display: none !important;
+                display: inline-flex !important;
             }
 
             /* -----------------------------

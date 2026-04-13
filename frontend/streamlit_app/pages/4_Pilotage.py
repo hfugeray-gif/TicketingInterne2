@@ -6,11 +6,7 @@ from core.api_tickets import api_get_tickets
 from core.auth import require_backoffice_access
 from core.styles import apply_global_styles, render_header
 
-st.set_page_config(
-    page_title="Pilotage — Ticketing interne",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+
 
 require_backoffice_access()
 apply_global_styles()

@@ -21,14 +21,6 @@ from core.api_tickets import (
 from core.app_config_service import get_active_subtypes_by_type
 
 
-# --------------------------------------------------
-# ⚙️ Configuration générale de la page
-# --------------------------------------------------
-st.set_page_config(
-    page_title="File de tickets — Ticketing interne",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
 
 # Vérifie que l'utilisateur est connecté ET autorisé à accéder au backoffice
 require_backoffice_access()
