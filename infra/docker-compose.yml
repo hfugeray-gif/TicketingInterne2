@@ -1,37 +1,53 @@
+version: "3.9"
+
 services:
-  postgres:
+  db:
     image: postgres:16
-    container_name: ticketing_postgres
+    container_name: ticketing_db
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: ticketing
-      POSTGRES_PASSWORD: ticketing
       POSTGRES_DB: ticketing
+      POSTGRES_USER: ticketing_user
+      POSTGRES_PASSWORD: ticketing_password
     ports:
       - "5432:5432"
     volumes:
-      - ticketing_postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ticketing_user -d ticketing"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   backend:
     build:
       context: ../backend
+      dockerfile: dockerfile
     container_name: ticketing_backend
-    env_file:
-      - ../.env
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://ticketing_user:ticketing_password@db:5432/ticketing
+      APP_BASE_URL: http://localhost:8501
+      EMAILS_ENABLED: "false"
+      CORS_ALLOW_ORIGINS: http://localhost:8501,http://127.0.0.1:8501
     ports:
       - "8000:8000"
-    depends_on:
-      - postgres
 
   frontend:
     build:
       context: ../frontend/streamlit_app
+      dockerfile: dockerfile
     container_name: ticketing_frontend
-    env_file:
-      - ../.env
-    ports:
-      - "8501:8501"
+    restart: unless-stopped
     depends_on:
       - backend
+    environment:
+      API_BASE_URL: http://backend:8000
+    ports:
+      - "8501:8501"
 
 volumes:
-  ticketing_postgres_data:
+  postgres_data:

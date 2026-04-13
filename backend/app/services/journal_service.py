@@ -1,13 +1,19 @@
-from app.repositories.journal_repository import create_journal_entry
+from sqlalchemy.orm import Session
+
+from app.repositories.journal_repository import log_action
 
 
-def log_action(db, ticket_id: int, action: str, details: str | None, auteur: str):
-    return create_journal_entry(
-        db,
-        {
-            "ticket_id": ticket_id,
-            "action": action,
-            "details": details,
-            "auteur": auteur,
-        },
+def log_action_service(
+    db: Session,
+    ticket_id: int,
+    action: str,
+    auteur: str,
+    details: str | None = None,
+):
+    return log_action(
+        db=db,
+        ticket_id=ticket_id,
+        action=action,
+        auteur=auteur,
+        details=details,
     )

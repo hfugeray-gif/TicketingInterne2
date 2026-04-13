@@ -1,31 +1,45 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes.comments import router as comments_router
-from app.api.routes.health import router as health_router
-from app.api.routes.journal import router as journal_router
-from app.api.routes.merge import router as merge_router
+from app.core.config import settings
 from app.api.routes.tickets import router as tickets_router
+from app.api.routes.comments import router as comments_router
+from app.api.routes.merge import router as merge_router
 from app.api.routes.config import router as config_router
-from app.api.routes.me import router as me_router
-from app.db import models
-from app.db.base import Base
-from app.db.session import engine
+
 
 app = FastAPI(
-    title="Ticketing API",
-    version="0.1.0",
+    title=settings.app_name,
+    debug=settings.debug,
 )
 
+# --------------------------------------------------
+# 🌐 CORS (important pour front <-> back)
+# --------------------------------------------------
+origins = [origin.strip() for origin in settings.cors_allow_origins.split(",")]
 
-app.include_router(health_router)
-app.include_router(tickets_router)
-app.include_router(comments_router)
-app.include_router(journal_router)
-app.include_router(merge_router)
-app.include_router(config_router)
-app.include_router(me_router)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# --------------------------------------------------
+# 🔌 Routes API
+# --------------------------------------------------
+app.include_router(tickets_router, prefix="/tickets", tags=["tickets"])
+app.include_router(comments_router, prefix="/comments", tags=["comments"])
+app.include_router(merge_router, prefix="/merge", tags=["merge"])
+app.include_router(config_router, prefix="/config", tags=["config"])
 
 
-@app.get("/")
-def root():
-    return {"message": "Ticketing API is running"}
+# --------------------------------------------------
+# ❤️ Healthcheck
+# --------------------------------------------------
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+

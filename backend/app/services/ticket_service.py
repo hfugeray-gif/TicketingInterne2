@@ -1,7 +1,14 @@
 from datetime import datetime
 
-from app.db.models.ticket import Ticket
+from sqlalchemy.orm import Session
 
+from app.db.models.ticket import Ticket
+from app.repositories.ticket_repository import (
+    create_ticket as repo_create_ticket,
+    get_ticket as repo_get_ticket,
+    get_tickets as repo_get_tickets,
+    update_ticket as repo_update_ticket,
+)
 
 VALID_TYPES = {"Infra", "Numérique"}
 VALID_STATUSES = {"Ouvert", "En cours", "Clôturé"}
@@ -23,6 +30,7 @@ def validate_ticket_creation_data(data: dict) -> dict:
 
     data["dispatcheur"] = resolve_dispatcher(typage)
     data["statut"] = "Ouvert"
+    data.setdefault("priorite", "Normale")
     return data
 
 
@@ -68,7 +76,7 @@ def apply_ticket_updates(ticket: Ticket, updates: dict) -> Ticket:
 
         if new_status == "Clôturé":
             motif = updates.get("motif_resolution", ticket.motif_resolution)
-            if not motif or not motif.strip():
+            if not motif or not str(motif).strip():
                 raise ValueError("Le motif de résolution est obligatoire pour clôturer.")
             if previous_status != "Clôturé":
                 ticket.closed_at = datetime.utcnow()
@@ -81,7 +89,41 @@ def apply_ticket_updates(ticket: Ticket, updates: dict) -> Ticket:
     return ticket
 
 
-def merge_tickets_into_master(db, master_ticket: Ticket, child_tickets: list[Ticket], auteur: str):
+def create_ticket(db: Session, payload) -> Ticket:
+    data = payload.model_dump() if hasattr(payload, "model_dump") else dict(payload)
+    data = validate_ticket_creation_data(data)
+    return repo_create_ticket(db, data)
+
+
+def list_tickets(db: Session) -> list[Ticket]:
+    return repo_get_tickets(db)
+
+
+def get_ticket_by_id(db: Session, ticket_id: int) -> Ticket | None:
+    return repo_get_ticket(db, ticket_id)
+
+
+def update_ticket(db: Session, ticket_id: int, payload) -> Ticket:
+    ticket = repo_get_ticket(db, ticket_id)
+    if not ticket:
+        raise ValueError("Ticket introuvable")
+
+    updates = (
+        payload.model_dump(exclude_unset=True)
+        if hasattr(payload, "model_dump")
+        else dict(payload)
+    )
+
+    ticket = apply_ticket_updates(ticket, updates)
+    return repo_update_ticket(db, ticket)
+
+
+def merge_tickets_into_master(
+    db: Session,
+    master_ticket: Ticket,
+    child_tickets: list[Ticket],
+    auteur: str,
+):
     if master_ticket.statut == "Clôturé":
         raise ValueError("Impossible de fusionner vers un ticket maître clôturé.")
 
@@ -117,7 +159,7 @@ def remove_ticket_from_master(ticket: Ticket):
     return ticket
 
 
-def cascade_close_children(db, master_ticket: Ticket):
+def cascade_close_children(db: Session, master_ticket: Ticket):
     children = (
         db.query(Ticket)
         .filter(Ticket.ticket_maitre_id == master_ticket.id, Ticket.statut != "Clôturé")

@@ -8,7 +8,7 @@ from app.schemas.merge import MergeRequest, UnmergeRequest
 from app.schemas.ticket import TicketResponse
 from app.services.journal_service import log_action
 from app.services.ticket_service import merge_tickets_into_master, remove_ticket_from_master
-from app.services.notification_service import notify_user_ticket_merged
+from app.services.notification_service import notify_ticket_merged
 
 router = APIRouter(prefix="/tickets", tags=["merge"])
 
@@ -64,7 +64,7 @@ def merge_into_master(ticket_id: int, payload: MergeRequest, db: Session = Depen
                 details=f"Ticket esclave rattaché : #{child.id}",
                 auteur=payload.auteur,
             )
-            notify_user_ticket_merged(child, master)
+            notify_ticket_merged(child, master)
         return merged
     except ValueError as e:
         db.rollback()
