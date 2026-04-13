@@ -17,13 +17,6 @@ APP_BASE_URL = "http://localhost:8501"
 # 🗄️ Base de données & uploads
 # -----------------------------
 
-# Chemin vers la base SQLite
-DB_PATH = ROOT_DIR / "tickets_demo.db"
-
-# Dossier pour stocker les images uploadées
-UPLOAD_DIR = ROOT_DIR / "uploads"
-UPLOAD_DIR.mkdir(exist_ok=True)  # Créé automatiquement s’il n’existe pas
-
 # -----------------------------
 # 🖼️ Assets (logo, etc.)
 # -----------------------------
@@ -85,28 +78,3 @@ TECH_EMAILS = {
 
 
 
-class Settings(BaseSettings):
-    app_name: str = "Ticketing API"
-    environment: str = "dev"
-    debug: bool = True
-
-    database_url: str = "sqlite:///./app.db"
-
-    smtp_host: str = "localhost"
-    smtp_port: int = 1025
-    smtp_use_tls: bool = False
-    smtp_username: str | None = None
-    smtp_password: str | None = None
-    smtp_from: str = "ticketing@beam.local"
-
-    app_base_url: str = "http://127.0.0.1:8501"
-    emails_enabled: bool = False
-
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-    )
-
-
-settings = Settings()

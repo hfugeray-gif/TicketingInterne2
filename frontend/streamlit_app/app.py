@@ -1,34 +1,16 @@
 import streamlit as st
 
-from core.db import init_db
-from core.styles import apply_global_styles
-from core.tickets import seed_demo_data, archive_closed_tickets
 from core.app_config_service import get_pages_config_map
+from core.styles import apply_global_styles
 
-# --------------------------------------------------
-# ⚙️ Configuration générale de l'application
-# --------------------------------------------------
 st.set_page_config(
     page_title="Ticketing interne — Démo MVP",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# --------------------------------------------------
-# 🗄️ Initialisation technique
-# --------------------------------------------------
-init_db()
-seed_demo_data()
-archive_closed_tickets(days=7)
-
-# --------------------------------------------------
-# 🎨 Style global
-# --------------------------------------------------
 apply_global_styles()
 
-# --------------------------------------------------
-# 🧠 Initialisation session
-# --------------------------------------------------
 if "role" not in st.session_state:
     st.session_state.role = ""
 
@@ -44,6 +26,7 @@ is_backoffice = is_logged_in and not is_simple_user
 
 pages_config = get_pages_config_map()
 
+
 def cfg(page_key, default_label, default_icon, default_visible=True, default_order=999):
     page_cfg = pages_config.get(page_key, {})
     return {
@@ -53,6 +36,7 @@ def cfg(page_key, default_label, default_icon, default_visible=True, default_ord
         "display_order": int(page_cfg.get("display_order", default_order)),
     }
 
+
 login_cfg = cfg("login", "Connexion", "🔐", True, 1)
 home_cfg = cfg("home", "Accueil", "🏠", True, 2)
 create_cfg = cfg("create_ticket", "Créer un ticket", "➕", True, 3)
@@ -61,10 +45,6 @@ queue_cfg = cfg("ticket_queue", "File de tickets", "📋", True, 5)
 dashboard_cfg = cfg("dashboard", "Pilotage", "📊", True, 6)
 admin_cfg = cfg("admin_export", "Admin / Export", "⚙️", True, 7)
 profile_cfg = cfg("profile", "Profil", "👤", True, 8)
-
-# --------------------------------------------------
-# 📄 Déclaration des pages
-# --------------------------------------------------
 
 page_login = st.Page(
     "pages/00_Login.py",
@@ -122,9 +102,7 @@ page_profile = st.Page(
     icon=profile_cfg["icon"],
     visibility="visible" if (is_logged_in and profile_cfg["is_visible"]) else "hidden",
 )
-# --------------------------------------------------
-# 🗂️ Référentiel des pages par clé logique
-# --------------------------------------------------
+
 page_registry = {
     "login": page_login,
     "home": page_home,
@@ -135,20 +113,42 @@ page_registry = {
     "admin_export": page_admin,
     "profile": page_profile,
 }
+
 page_meta = {
     "login": {"page": page_login, "section": "", "order": login_cfg["display_order"]},
     "home": {"page": page_home, "section": "", "order": home_cfg["display_order"]},
-    "create_ticket": {"page": page_create, "section": "Espace utilisateur", "order": create_cfg["display_order"]},
-    "my_tickets": {"page": page_my_tickets, "section": "Espace utilisateur", "order": my_tickets_cfg["display_order"]},
-    "profile": {"page": page_profile, "section": "Espace utilisateur", "order": profile_cfg["display_order"]},
-    "ticket_queue": {"page": page_queue, "section": "Opérationnel", "order": queue_cfg["display_order"]},
-    "dashboard": {"page": page_dashboard, "section": "Pilotage & administration", "order": dashboard_cfg["display_order"]},
-    "admin_export": {"page": page_admin, "section": "Pilotage & administration", "order": admin_cfg["display_order"]},
+    "create_ticket": {
+        "page": page_create,
+        "section": "Espace utilisateur",
+        "order": create_cfg["display_order"],
+    },
+    "my_tickets": {
+        "page": page_my_tickets,
+        "section": "Espace utilisateur",
+        "order": my_tickets_cfg["display_order"],
+    },
+    "profile": {
+        "page": page_profile,
+        "section": "Espace utilisateur",
+        "order": profile_cfg["display_order"],
+    },
+    "ticket_queue": {
+        "page": page_queue,
+        "section": "Opérationnel",
+        "order": queue_cfg["display_order"],
+    },
+    "dashboard": {
+        "page": page_dashboard,
+        "section": "Pilotage & administration",
+        "order": dashboard_cfg["display_order"],
+    },
+    "admin_export": {
+        "page": page_admin,
+        "section": "Pilotage & administration",
+        "order": admin_cfg["display_order"],
+    },
 }
 
-# --------------------------------------------------
-# 🧭 Navigation
-# --------------------------------------------------
 sections_order = ["", "Espace utilisateur", "Opérationnel", "Pilotage & administration"]
 
 pages = {}
@@ -162,9 +162,6 @@ for section in sections_order:
 
 pg = st.navigation(pages, position="top")
 
-# --------------------------------------------------
-# 🔀 Redirection différée
-# --------------------------------------------------
 if st.session_state.pending_page_key:
     target_key = st.session_state.pending_page_key
     st.session_state.pending_page_key = None
@@ -172,7 +169,5 @@ if st.session_state.pending_page_key:
     if target_key in page_registry:
         st.switch_page(page_registry[target_key])
 
-# --------------------------------------------------
-# ▶️ Exécution de la page sélectionnée
-# --------------------------------------------------
 pg.run()
+

@@ -1,150 +1,57 @@
+"""
+Couche de compatibilité transitoire pour l'administration.
+
+Anciennement, ce module exécutait des requêtes SQLite côté frontend.
+Désormais, toutes les données doivent venir du backend API.
+"""
+
 import pandas as pd
 
-from core.db import get_conn
+from core.api_tickets import api_get_comments, api_get_journal, api_get_tickets
 
 
-ALLOWED_TABLES = {
-    "tickets": [
-        "id",
-        "titre",
-        "typage",
-        "site",
-        "sous_type",
-        "commentaire",
-        "photo_path",
-        "statut",
-        "priorite",
-        "demandeur",
-        "dispatcheur",
-        "assigne_a",
-        "motif_resolution",
-        "ticket_maitre_id",
-        "created_at",
-        "updated_at",
-        "closed_at",
-    ],
-    "commentaires": [
-        "id",
-        "ticket_id",
-        "auteur",
-        "contenu",
-        "created_at",
-    ],
-    "journal": [
-        "id",
-        "ticket_id",
-        "action",
-        "details",
-        "auteur",
-        "created_at",
-    ],
-        "tickets_archive": [
-        "id",
-        "titre",
-        "typage",
-        "sous_type",
-        "commentaire",
-        "photo_path",
-        "statut",
-        "priorite",
-        "demandeur",
-        "dispatcheur",
-        "assigne_a",
-        "motif_resolution",
-        "ticket_maitre_id",
-        "created_at",
-        "updated_at",
-        "closed_at",
-        "archived_at",
-    ],
-    "commentaires_archive": [
-        "id",
-        "ticket_id",
-        "auteur",
-        "contenu",
-        "created_at",
-        "archived_at",
-    ],
-}
-
-
-def run_select_query(
-    table: str,
-    selected_columns: list[str],
-    filters: dict,
-    order_by: str | None,
-    order_dir: str = "DESC",
-    limit: int = 100,
-) -> pd.DataFrame:
-    if table not in ALLOWED_TABLES:
-        raise ValueError("Table non autorisée.")
-
-    allowed_columns = ALLOWED_TABLES[table]
-
-    if not selected_columns:
-        selected_columns = allowed_columns
-
-    for col in selected_columns:
-        if col not in allowed_columns:
-            raise ValueError(f"Colonne non autorisée : {col}")
-
-    if order_by and order_by not in allowed_columns:
-        raise ValueError(f"Colonne de tri non autorisée : {order_by}")
-
-    if order_dir not in ("ASC", "DESC"):
-        order_dir = "DESC"
-
-    sql = f"SELECT {', '.join(selected_columns)} FROM {table}"
-    where_clauses = []
-    params = []
-
-    for key, value in filters.items():
-        if key not in allowed_columns:
-            continue
-
-        if value is None or value == "" or value == []:
-            continue
-
-        if isinstance(value, list):
-            placeholders = ",".join(["?"] * len(value))
-            where_clauses.append(f"{key} IN ({placeholders})")
-            params.extend(value)
-        else:
-            where_clauses.append(f"{key} = ?")
-            params.append(value)
-
-    search_text = filters.get("search_text")
-    if search_text:
-        text_cols = [c for c in ["titre", "commentaire", "contenu", "details"] if c in allowed_columns]
-        if text_cols:
-            sub = " OR ".join([f"{col} LIKE ?" for col in text_cols])
-            where_clauses.append(f"({sub})")
-            params.extend([f"%{search_text}%"] * len(text_cols))
-
-    date_from = filters.get("date_from")
-    date_to = filters.get("date_to")
-
-    if date_from and "created_at" in allowed_columns:
-        where_clauses.append("created_at >= ?")
-        params.append(date_from)
-
-    if date_to and "created_at" in allowed_columns:
-        where_clauses.append("created_at <= ?")
-        params.append(date_to)
-
-    if where_clauses:
-        sql += " WHERE " + " AND ".join(where_clauses)
-
-    if order_by:
-        sql += f" ORDER BY {order_by} {order_dir}"
-
-    sql += " LIMIT ?"
-    params.append(limit)
-
-    conn = get_conn()
+def get_tickets_dataframe() -> pd.DataFrame:
     try:
-        df = pd.read_sql_query(sql, conn, params=params)
-    finally:
-        conn.close()
+        return pd.DataFrame(api_get_tickets())
+    except RuntimeError:
+        return pd.DataFrame()
 
-    return df
+
+def get_comments_dataframe() -> pd.DataFrame:
+    tickets_df = get_tickets_dataframe()
+    if tickets_df.empty or "id" not in tickets_df.columns:
+        return pd.DataFrame()
+
+    rows = []
+    for ticket_id in tickets_df["id"].dropna().tolist():
+        try:
+            comments = api_get_comments(int(ticket_id))
+        except RuntimeError:
+            continue
+
+        for item in comments:
+            row = dict(item)
+            row["ticket_id"] = int(ticket_id)
+            rows.append(row)
+
+    return pd.DataFrame(rows)
+
+
+def get_journal_dataframe() -> pd.DataFrame:
+    tickets_df = get_tickets_dataframe()
+    if tickets_df.empty or "id" not in tickets_df.columns:
+        return pd.DataFrame()
+
+    rows = []
+    for ticket_id in tickets_df["id"].dropna().tolist():
+        try:
+            journal_entries = api_get_journal(int(ticket_id))
+        except RuntimeError:
+            continue
+
+        for item in journal_entries:
+            row = dict(item)
+            row["ticket_id"] = int(ticket_id)
+            rows.append(row)
+
+    return pd.DataFrame(rows)
