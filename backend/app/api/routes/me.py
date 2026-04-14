@@ -2,7 +2,7 @@ from fastapi import APIRouter, Header
 
 from app.schemas.me import MeResponse
 
-router = APIRouter(tags=["me"])
+router = APIRouter()
 
 
 @router.get("/me", response_model=MeResponse)

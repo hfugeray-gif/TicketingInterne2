@@ -16,7 +16,7 @@ from app.services.ticket_service import (
     update_ticket,
 )
 
-router = APIRouter(prefix="/tickets", tags=["tickets"])
+router = APIRouter()
 
 
 @router.post("/", response_model=TicketResponse)

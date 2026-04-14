@@ -1,8 +1,9 @@
 import os
+
 import requests
 import streamlit as st
 
-API_BASE_URL = os.getenv("API_BASE_URL", "http://backend:8000").rstrip("/")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 
 
 def _build_headers() -> dict:
@@ -19,7 +20,8 @@ def _handle_response(response: requests.Response):
         response.raise_for_status()
     except requests.HTTPError as e:
         try:
-            detail = response.json().get("detail", response.text)
+            body = response.json()
+            detail = body.get("detail", body)
         except Exception:
             detail = response.text
         raise RuntimeError(detail) from e
@@ -58,3 +60,5 @@ def api_patch(path: str, payload: dict):
         timeout=15,
     )
     return _handle_response(response)
+
+

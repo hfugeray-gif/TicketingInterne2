@@ -3,7 +3,7 @@ from fastapi import APIRouter, Query
 from app.schemas.reference import PageConfigResponse, SiteResponse, SubtypeResponse
 from app.services.reference_service import get_pages_config, get_sites, get_subtypes
 
-router = APIRouter(prefix="/config", tags=["config"])
+router = APIRouter()
 
 
 @router.get("/sites", response_model=list[SiteResponse])

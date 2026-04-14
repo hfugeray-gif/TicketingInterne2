@@ -74,6 +74,9 @@ admin_cfg = cfg("admin_export", "Admin / Export", "⚙️", True, 7)
 profile_cfg = cfg("profile", "Profil", "👤", True, 8)
 
 
+
+
+
 # --------------------------------------------------
 # 📄 Déclaration des pages
 # --------------------------------------------------
@@ -83,7 +86,7 @@ page_login = st.Page(
     "pages/00_Login.py",
     title=login_cfg["label"],
     icon=login_cfg["icon"],
-    default=True,
+    default=not is_logged_in,
     
 )
 
@@ -91,6 +94,7 @@ page_home = st.Page(
     "pages/0_Accueil.py",
     title=home_cfg["label"],
     icon=home_cfg["icon"],
+    default=is_logged_in,
     
 )
 

@@ -31,6 +31,6 @@ def add_comment_to_ticket(db, ticket, auteur: str, contenu: str):
         auteur=auteur,
     )
 
-    notify_new_comment(ticket, auteur, contenu.strip())
+    notify_new_comment(ticket, comment)
 
     return comment

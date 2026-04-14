@@ -76,10 +76,15 @@ def apply_global_styles():
                 display: none !important;
             }
 
-            /* NE PAS cacher les boutons de header :
-            ils portent la navigation du haut */
+            /* Cache uniquement le bouton de sidebar repliée */
+            [data-testid="stSidebarCollapsedControl"] {
+                display: none !important;
+            }
+
+            /* Garde visibles les boutons du header (navigation du haut) */
             button[kind="header"] {
                 display: inline-flex !important;
+                align-items: center !important;
             }
 
             /* -----------------------------
@@ -336,7 +341,8 @@ def apply_global_styles():
                 }
 
                 button[kind="header"] {
-                    display: block !important;
+                    display: inline-flex !important;
+                    align-items: center !important;
                 }
 
                 .block-container {
@@ -377,22 +383,23 @@ def apply_global_styles():
             /* Logo dans la barre du haut */
             [data-testid="stHeader"] {{
                 position: relative;
-                padding-left: 52px !important;
+                padding-left: 60px !important;
             }}
 
             [data-testid="stHeader"]::before {{
                 content: "";
                 position: absolute;
-                left: 8px;
+                left: 10px;
                 top: 50%;
                 transform: translateY(-50%);
-                width: 44px;
-                height: 44px;
+                width: 38px;
+                height: 38px;
                 background-image: url("data:image/png;base64,{logo_base64}");
                 background-size: contain;
                 background-repeat: no-repeat;
                 background-position: center;
                 z-index: 10;
+                pointer-events: none;
             }}
         </style>
         """,

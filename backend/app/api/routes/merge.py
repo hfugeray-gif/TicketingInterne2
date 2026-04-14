@@ -10,7 +10,7 @@ from app.services.journal_service import log_action
 from app.services.ticket_service import merge_tickets_into_master, remove_ticket_from_master
 from app.services.notification_service import notify_ticket_merged
 
-router = APIRouter(prefix="/tickets", tags=["merge"])
+router = APIRouter()
 
 
 def get_db():

@@ -7,7 +7,7 @@ from app.repositories.comment_repository import get_comments_by_ticket
 from app.schemas.comment import CommentCreate, CommentResponse
 from app.services.comment_service import add_comment_to_ticket
 
-router = APIRouter(prefix="/tickets/{ticket_id}/comments", tags=["comments"])
+router = APIRouter()
 
 
 def get_db():

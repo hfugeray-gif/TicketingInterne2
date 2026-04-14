@@ -6,7 +6,7 @@ from app.api.routes.tickets import router as tickets_router
 from app.api.routes.comments import router as comments_router
 from app.api.routes.merge import router as merge_router
 from app.api.routes.config import router as config_router
-
+from app.api.routes.journal import router as journal_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -32,6 +32,7 @@ app.add_middleware(
 app.include_router(tickets_router, prefix="/tickets", tags=["tickets"])
 app.include_router(comments_router, prefix="/comments", tags=["comments"])
 app.include_router(merge_router, prefix="/merge", tags=["merge"])
+app.include_router(journal_router, prefix="/journal", tags=["journal"])
 app.include_router(config_router, prefix="/config", tags=["config"])
 
 
